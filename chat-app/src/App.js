@@ -1,8 +1,16 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import styled from '@emotion/styled';
-import { createContext, useContext, useReducer, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { BrowserRouter, Link, Redirect, Route } from 'react-router-dom';
+import * as io from 'socket.io-client';
 
 const Section = styled.section`
   background-color: #000;
@@ -56,16 +64,34 @@ const Home = () => {
 const Chat = () => {
   const { state, dispatch } = useContext(ReduxStoreContext);
   const [text, setText] = useState('');
+  const connectionRef = useRef(null);
+
+  useEffect(() => {
+    // nawiazuj polaczenie
+    connectionRef.current = io.connect('https://chat-server.fbg.pl');
+
+    // nasluchuj na wiadomosci od servera
+    connectionRef.current.on('chat message', (message) => {
+      dispatch({
+        type: ACTIONS.ADD_MESSAGE,
+        payload: message,
+      });
+    });
+
+    return () => {
+      // zamknij polaczenie
+      // w celu unikniecia wyciekow pamieci
+      connectionRef.current.close();
+      connectionRef.current = null;
+    };
+  }, []);
 
   const handleTextChange = (event) => {
     setText(event.target.value);
   };
 
   const handleSendClick = (event) => {
-    dispatch({
-      type: ACTIONS.ADD_MESSAGE,
-      payload: { authorId: state.name, text },
-    });
+    connectionRef.current.emit('chat message', { authorId: state.name, text });
     setText('');
   };
 
@@ -79,7 +105,6 @@ const Chat = () => {
             width: 400px;
           `}
         >
-          <div>Name: {state.name}</div>
           <div>
             <input
               value={text}
@@ -105,10 +130,7 @@ const Chat = () => {
 // stan poczatkowy
 const initialState = {
   name: '',
-  messages: [
-    { authorId: 'Wojtek', text: 'Wiadomość 1' },
-    { authorId: 'Wojtek', text: 'Wiadomość 2' },
-  ],
+  messages: [],
 };
 
 // definiujemy dostepne typy akcji
