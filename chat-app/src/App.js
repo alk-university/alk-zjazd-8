@@ -84,7 +84,7 @@ const Chat = () => {
       connectionRef.current.close();
       connectionRef.current = null;
     };
-  }, []);
+  }, [dispatch]);
 
   const handleTextChange = (event) => {
     setText(event.target.value);
