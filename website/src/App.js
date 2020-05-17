@@ -1,26 +1,34 @@
-import React, { useReducer } from 'react';
+import React, { createContext, useContext, useReducer } from 'react';
 
-const Home = (props) => {
-  const handleChange = (event) => {
-    props.setName(event.target.value);
+const ACTIONS = {
+  SET_NAME: 'SET_NAME',
+  SET_AGE: 'SET_AGE',
+};
+
+const Home = () => {
+  const { state, dispatch } = useContext(ReduxContext);
+
+  const handleChangeName = (event) => {
+    dispatch({ type: ACTIONS.SET_NAME, payload: event.target.value });
   };
 
   const handleChangeAge = (event) => {
-    props.setAge(event.target.value);
+    dispatch({ type: ACTIONS.SET_AGE, payload: event.target.value });
   };
 
   return (
     <div>
-      Name: <input value={props.name} onChange={handleChange} />
+      Name: <input value={state.name} onChange={handleChangeName} />
       <br />
-      Age: <input value={props.age} onChange={handleChangeAge} />
+      Age: <input value={state.age} onChange={handleChangeAge} />
       <br />
     </div>
   );
 };
 
-const Chat = (props) => {
-  return <div>Name: {props.name}</div>;
+const Chat = () => {
+  const { state } = useContext(ReduxContext);
+  return <div>Name: {state.name}</div>;
 };
 
 // action = { type: 'SET_NAME', payload: 'John Doe' };
@@ -29,11 +37,11 @@ const reducer = (state, action) => {
 
   // rozpoznajemy akcje
   switch (action.type) {
-    case 'SET_NAME':
+    case ACTIONS.SET_NAME:
       // zmien name w stanie
       return { ...state, name: action.payload };
 
-    case 'SET_AGE':
+    case ACTIONS.SET_AGE:
       return { ...state, age: action.payload };
 
     default:
@@ -44,21 +52,20 @@ const reducer = (state, action) => {
 // domyślny stan aplikacji
 const initialState = {
   name: 'John Doe',
-  age: 20,
+  age: 30,
 };
+
+const ReduxContext = createContext();
 
 const App = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
     <section>
-      <Home
-        name={state.name}
-        age={state.age}
-        setName={(value) => dispatch({ type: 'SET_NAME', payload: value })}
-        setAge={(value) => dispatch({ type: 'SET_AGE', payload: value })}
-      />
-      <Chat name={state.name} />
+      <ReduxContext.Provider value={{ state, dispatch }}>
+        <Home />
+        <Chat />
+      </ReduxContext.Provider>
     </section>
   );
 };
