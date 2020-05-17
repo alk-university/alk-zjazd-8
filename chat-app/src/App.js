@@ -1,7 +1,7 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import styled from '@emotion/styled';
-import { useReducer, useState } from 'react';
+import { createContext, useContext, useReducer, useState } from 'react';
 import { BrowserRouter, Link, Route } from 'react-router-dom';
 
 const Section = styled.section`
@@ -47,9 +47,50 @@ const Home = () => {
   );
 };
 
+const Chat = () => {
+  const { state, dispatch } = useContext(ReduxStoreContext);
+  const [text, setText] = useState('');
+
+  const handleTextChange = (event) => {
+    setText(event.target.value);
+  };
+
+  const handleSendClick = (event) => {
+    dispatch({
+      type: ACTIONS.ADD_MESSAGE,
+      payload: { authorId: 'Wojtek', text },
+    });
+    setText('');
+  };
+
+  return (
+    <Section>
+      <Box>
+        <div>Name: {state.name}</div>
+        <div>
+          <input
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Your message"
+          />
+          <button onClick={handleSendClick}>send</button>
+        </div>
+        <ul>
+          {state.messages.map((message, index) => (
+            <li key={index}>
+              <b>{message.authorId}:</b>
+              {message.text}
+            </li>
+          ))}
+        </ul>
+      </Box>
+    </Section>
+  );
+};
+
 // stan poczatkowy
 const initialState = {
-  name: '',
+  name: 'John Doe',
   messages: [
     { authorId: 'Wojtek', text: 'Wiadomość 1' },
     { authorId: 'Wojtek', text: 'Wiadomość 2' },
@@ -72,54 +113,20 @@ const reducer = (state, action) => {
   }
 };
 
-const Chat = () => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [text, setText] = useState('');
-
-  const handleTextChange = (event) => {
-    setText(event.target.value);
-  };
-
-  const handleSendClick = (event) => {
-    dispatch({
-      type: ACTIONS.ADD_MESSAGE,
-      payload: { authorId: 'Wojtek', text },
-    });
-    setText('');
-  };
-
-  return (
-    <Section>
-      <Box>
-        <div>Nick: ...</div>
-        <div>
-          <input
-            value={text}
-            onChange={handleTextChange}
-            placeholder="Your message"
-          />
-          <button onClick={handleSendClick}>send</button>
-        </div>
-        <ul>
-          {state.messages.map((message, index) => (
-            <li key={index}>
-              <b>{message.authorId}:</b>
-              {message.text}
-            </li>
-          ))}
-        </ul>
-      </Box>
-    </Section>
-  );
-};
+// definiujemy globalny context dla Redux Store
+const ReduxStoreContext = createContext();
 
 const App = () => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
   return (
     <div>
-      <BrowserRouter>
-        <Route exact path="/" component={Home} />
-        <Route path="/chat" component={Chat} />
-      </BrowserRouter>
+      <ReduxStoreContext.Provider value={{ state, dispatch }}>
+        <BrowserRouter>
+          <Route exact path="/" component={Home} />
+          <Route path="/chat" component={Chat} />
+        </BrowserRouter>
+      </ReduxStoreContext.Provider>
     </div>
   );
 };
