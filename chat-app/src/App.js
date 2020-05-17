@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import styled from '@emotion/styled';
+import { useReducer, useState } from 'react';
 import { BrowserRouter, Link, Route } from 'react-router-dom';
 
 const Section = styled.section`
@@ -46,10 +47,68 @@ const Home = () => {
   );
 };
 
+// stan poczatkowy
+const initialState = {
+  name: '',
+  messages: [
+    { authorId: 'Wojtek', text: 'Wiadomość 1' },
+    { authorId: 'Wojtek', text: 'Wiadomość 2' },
+  ],
+};
+
+// definiujemy dostepne typy akcji
+const ACTIONS = {
+  ADD_MESSAGE: 'ADD_MESSAGE',
+};
+
+// definiujemy reducer
+const reducer = (state, action) => {
+  switch (action.type) {
+    case ACTIONS.ADD_MESSAGE:
+      return { ...state, messages: [...state.messages, action.payload] };
+
+    default:
+      return state;
+  }
+};
+
 const Chat = () => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const [text, setText] = useState('');
+
+  const handleTextChange = (event) => {
+    setText(event.target.value);
+  };
+
+  const handleSendClick = (event) => {
+    dispatch({
+      type: ACTIONS.ADD_MESSAGE,
+      payload: { authorId: 'Wojtek', text },
+    });
+    setText('');
+  };
+
   return (
     <Section>
-      <Box>Nick: ...</Box>
+      <Box>
+        <div>Nick: ...</div>
+        <div>
+          <input
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Your message"
+          />
+          <button onClick={handleSendClick}>send</button>
+        </div>
+        <ul>
+          {state.messages.map((message, index) => (
+            <li key={index}>
+              <b>{message.authorId}:</b>
+              {message.text}
+            </li>
+          ))}
+        </ul>
+      </Box>
     </Section>
   );
 };
